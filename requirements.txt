@@ -1,5 +1,7 @@
-streamlit
+flask
+gunicorn
 openai
 pypdf
 numpy
 python-dotenv
+sentence-transformers
