@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Your PDF</title>
+
+    <!-- Favicon: a 📄 emoji inside an inline SVG, so no image file is needed -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230866FF'/><text x='50' y='68' font-size='58' text-anchor='middle'>📄</text></svg>">
+    <meta name="theme-color" content="#7C3AED">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* ---------- NEUBRUTALISM THEME: purple, pink, Meta blue ---------- */
+        :root {
+            --purple: #7C3AED;
+            --violet: #A78BFA;
+            --pink: #FF5FA2;
+            --pink-soft: #FFD1E6;
+            --meta: #0866FF;
+            --meta-soft: #CFE0FF;
+            --lime: #C6F432;
+            --white: #FFFFFF;
+            --black: #000000;
+            --bg: #F5EEFF;
+            --border: 3px solid #000;
+            --shadow: 6px 6px 0 #000;
+            --shadow-sm: 4px 4px 0 #000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(rgba(124, 58, 237, 0.22) 1.5px, transparent 1.5px);
+            background-size: 22px 22px;
+            color: var(--black);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ---------- HEADER ---------- */
+        header {
+            text-align: center;
+        }
+
+        header h1 {
+            display: inline-block;
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--white);
+            background: var(--purple);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 8px 22px;
+            transform: rotate(-1deg);
+        }
+
+        header p {
+            margin-top: 16px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* ---------- CARD ---------- */
+        .card {
+            background: var(--white);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+
+        /* ---------- UPLOAD ROW ---------- */
+        .upload {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .file-btn {
+            display: inline-block;
+            background: var(--pink);
+            color: var(--black);
+            border: var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 10px 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .file-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000;
+        }
+
+        .file-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 #000;
+        }
+
+        #status {
+            font-size: 14px;
+            font-weight: 700;
+            background: var(--lime);
+            border: 2px solid #000;
+            padding: 6px 12px;
+        }
+
+        /* ---------- CHAT AREA ---------- */
+        .chat-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: var(--white);
+        }
+
+        .empty {
+            margin: auto;
+            font-size: 16px;
+            font-weight: 700;
+            background: var(--meta-soft);
+            border: var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 12px 18px;
+            text-align: center;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+
+        .row.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .row.bot {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .bubble.user {
+            background: var(--violet);
+            color: var(--black);
+            font-weight: 500;
+        }
+
+        .bubble.bot {
+            background: var(--meta-soft);
+        }
+
+        .bubble.bot.typing {
+            background: var(--white);
+            font-weight: 700;
+            animation: blink 1s steps(2, start) infinite;
+        }
+
+        @keyframes blink {
+            to { visibility: hidden; }
+        }
+
+        /* Edit button */
+        .edit-btn {
+            margin-top: 8px;
+            background: var(--white);
+            color: var(--black);
+            border: 2px solid #000;
+            box-shadow: 2px 2px 0 #000;
+            padding: 4px 10px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .edit-btn:hover:not(:disabled) {
+            background: var(--lime);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .edit-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 #000;
+        }
+
+        .edit-btn:disabled {
+            background: #e5e5e5;
+            color: #888;
+            border-color: #888;
+            box-shadow: none;
+        }
+
+        /* Edit mode box */
+        .edit-box {
+            background: var(--pink-soft);
+            width: 100%;
+        }
+
+        .edit-box textarea {
+            width: 100%;
+            min-height: 70px;
+            border: 2px solid #000;
+            background: var(--white);
+            font: inherit;
+            padding: 8px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .edit-box textarea:focus {
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .btns {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        /* Sources */
+        details {
+            margin-top: 12px;
+            font-size: 13px;
+            white-space: normal;   /* stops extra blank lines from the bubble's pre-wrap */
+        }
+
+        summary {
+            cursor: pointer;
+            display: inline-block;
+            background: var(--pink);
+            color: var(--black);
+            border: 2px solid #000;
+            box-shadow: 2px 2px 0 #000;
+            padding: 4px 10px;
+            font-weight: 700;
+            list-style: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .src {
+            background: var(--white);
+            border: 2px solid #000;
+            box-shadow: 3px 3px 0 #000;
+            padding: 8px 10px;
+            margin-top: 10px;
+            color: #111;
+        }
+
+        /* ---------- INPUT BAR ---------- */
+        .inputbar {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            border-top: var(--border);
+            background: var(--white);
+        }
+
+        #questionInput {
+            flex: 1;
+            border: var(--border);
+            border-radius: 0;
+            padding: 12px 14px;
+            font: inherit;
+            font-weight: 500;
+            resize: none;
+            outline: none;
+            background: var(--white);
+        }
+
+        #questionInput:focus {
+            box-shadow: var(--shadow-sm);
+        }
+
+        #questionInput:disabled {
+            background: #eee;
+        }
+
+        /* ---------- GENERIC BUTTON ---------- */
+        button {
+            font: inherit;
+            font-weight: 700;
+            border: var(--border);
+            border-radius: 0;
+            padding: 10px 20px;
+            background: var(--meta);
+            color: var(--white);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000;
+            background: var(--purple);
+        }
+
+        button:active:not(:disabled) {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 #000;
+        }
+
+        button:disabled {
+            background: #e5e5e5;
+            color: #888;
+            border-color: #888;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        button.ghost {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        button.ghost:hover:not(:disabled) {
+            background: var(--pink);
+            color: var(--black);
+        }
+
+        /* ---------- RESPONSIVE ---------- */
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 26px;
+            }
+
+            .row {
+                max-width: 95%;
+            }
+
+            .inputbar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <header>
+            <h1>📄 Ask Your PDF</h1>
+            <p>Upload a PDF, ask questions, and edit any question to ask it again</p>
+        </header>
+
+        <!-- Upload section -->
+        <div class="card upload">
+            <label class="file-btn">
+                📎 Choose PDF
+                <input type="file" id="fileInput" accept="application/pdf" hidden>
+            </label>
+            <span id="status">No PDF uploaded yet</span>
+        </div>
+
+        <!-- Chat section -->
+        <div class="card chat-card">
+            <div id="chat"></div>
+
+            <div class="inputbar">
+                <textarea id="questionInput" rows="1" placeholder="Type your question... (Enter = send)"
+                    disabled></textarea>
+                <button id="sendBtn" disabled>Send ➤</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ---------- STATE (app memory) ----------
+        // messages = full chat list. Each item: {role, text, sources, loading}
+        let messages = [];
+        let busy = false;          // true while the server is answering
+        let editingIndex = null;   // which question is being edited
+        let pdfReady = false;      // true once a PDF has been indexed successfully
+
+        const $ = id => document.getElementById(id);
+
+        // Makes text safe for HTML so typed <, > characters don't break the page
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // Enables or disables the question input and Send button
+        function setInputEnabled(enabled) {
+            $('questionInput').disabled = !enabled;
+            $('sendBtn').disabled = !enabled;
+        }
+
+        // ---------- 1. PDF UPLOAD ----------
+        async function uploadPdf() {
+            const input = $('fileInput');
+            const file = input.files[0];
+            if (!file) return;
+
+            $('status').textContent = '⏳ Reading your PDF, please wait...';
+            setInputEnabled(false);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    $('status').textContent = '❌ ' + data.error;
+                    return;
+                }
+
+                $('status').textContent = `✅ ${data.name} ready (${data.chunks} parts)`;
+                pdfReady = true;
+                messages = [];   // new PDF starts a new chat
+                editingIndex = null;
+                render();
+            } catch (err) {
+                $('status').textContent = '❌ Upload failed. Check the server terminal for details.';
+            } finally {
+                // Restore the controls. If an earlier PDF is still loaded, keep chatting.
+                setInputEnabled(pdfReady && !busy);
+                input.value = '';   // lets the user pick the same file again
+            }
+        }
+
+        // ---------- 2. SEND QUESTION ----------
+        async function ask(question) {
+            // First add the user's question and a "thinking" placeholder
+            messages.push({ role: 'user', text: question });
+            messages.push({ role: 'bot', text: '', loading: true });
+            busy = true;
+            render();
+
+            try {
+                const res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await res.json();
+                const botMsg = messages[messages.length - 1];
+
+                if (!res.ok) {
+                    botMsg.text = '❌ ' + data.error;
+                } else {
+                    botMsg.text = data.answer;
+                    botMsg.sources = data.sources;
+                }
+                botMsg.loading = false;
+            } catch (err) {
+                const botMsg = messages[messages.length - 1];
+                botMsg.text = '❌ Could not connect to the server.';
+                botMsg.loading = false;
+            }
+
+            busy = false;
+            render();
+        }
+
+        // Send the question typed in the input box
+        function sendFromInput() {
+            const q = $('questionInput').value.trim();
+            if (!q || busy || !pdfReady) return;
+            $('questionInput').value = '';
+            ask(q);
+        }
+
+        // ---------- 3. EDIT ----------
+        function startEdit(i) {
+            if (busy) return;
+            editingIndex = i;
+            render();
+        }
+
+        function cancelEdit() {
+            editingIndex = null;
+            render();
+        }
+
+        function saveEdit(i) {
+            const newText = $('editBox').value.trim();
+            if (!newText || busy) return;
+
+            editingIndex = null;
+            // Keep the chat before this question, remove this question and everything after it
+            messages = messages.slice(0, i);
+            ask(newText);   // ask the edited question again
+        }
+
+        // ---------- 4. RENDER SCREEN ----------
+        function render() {
+            const chat = $('chat');
+            chat.innerHTML = '';
+
+            if (messages.length === 0) {
+                chat.innerHTML = '<div class="empty">Upload a PDF, then ask a question 👇</div>';
+            }
+
+            messages.forEach((m, i) => {
+                const row = document.createElement('div');
+                row.className = 'row ' + m.role;
+
+                if (m.role === 'user') {
+                    if (editingIndex === i) {
+                        // Edit mode: show textarea
+                        row.innerHTML = `
+              <div class="bubble edit-box">
+                <textarea id="editBox">${esc(m.text)}</textarea>
+                <div class="btns">
+                  <button class="ghost" onclick="cancelEdit()">Cancel</button>
+                  <button onclick="saveEdit(${i})">Save & Ask</button>
+                </div>
+              </div>`;
+                    } else {
+                        // Normal mode: question and Edit button
+                        row.innerHTML = `
+              <div class="bubble user">${esc(m.text)}</div>
+              <button class="edit-btn" onclick="startEdit(${i})" ${busy ? 'disabled' : ''}>
+                ✏️ Edit
+              </button>`;
+                    }
+                } else {
+                    // Bot message
+                    if (m.loading) {
+                        row.innerHTML = `<div class="bubble bot typing">⏳ Searching the document...</div>`;
+                    } else {
+                        let sourcesHtml = '';
+                        if (m.sources && m.sources.length) {
+                            sourcesHtml = `<details><summary>📚 Sources (${m.sources.length})</summary>` +
+                                m.sources.map(s => `
+                  <div class="src">
+                    <b>Page ${s.page}</b> · relevance ${s.score}
+                    <div>${esc(s.text)}...</div>
+                  </div>`).join('') +
+                                `</details>`;
+                        }
+                        row.innerHTML = `<div class="bubble bot">${esc(m.text)}${sourcesHtml}</div>`;
+                    }
+                }
+
+                chat.appendChild(row);
+            });
+
+            chat.scrollTop = chat.scrollHeight;   // always scroll to bottom
+            if (editingIndex !== null && $('editBox')) $('editBox').focus();
+        }
+
+        // ---------- EVENT LISTENERS ----------
+        $('fileInput').addEventListener('change', uploadPdf);
+        $('sendBtn').addEventListener('click', sendFromInput);
+
+        // Press Enter to send, Shift+Enter for a new line
+        $('questionInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendFromInput();
+            }
+        });
+
+        render();
+    </script>
+</body>
+</html>
