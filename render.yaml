@@ -1,0 +1,14 @@
+# render.yaml
+services:
+  - type: web
+    name: ask-your-pdf
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GROQ_API_KEY
+        sync: false   # you set the real value in the Render dashboard, not in Git
